@@ -1,10 +1,26 @@
 #include <Arduino.h>
+<<<<<<< HEAD
 
 RTC_DATA_ATTR int wakeCounter = 0; 
 
 void goToSleep() {
     Serial.println("[Sleep] Preparing to sleep for 2 minutes...");
     esp_sleep_enable_timer_wakeup(2 * 60 * 1000000); 
+=======
+#include "SimulatedQMI8658.h"  
+
+SimulatedQMI8658 sensor;  
+
+RTC_DATA_ATTR int wakeCounter = 0;
+
+void onMotionDetected() {
+    Serial.println("[Motion] Wake-up motion detected!");
+}
+
+void goToSleep() {
+    Serial.println("[Sleep] Preparing to sleep for 2 minutes...");
+    esp_sleep_enable_timer_wakeup(2 * 60 * 1000000);  
+>>>>>>> f1b6f46 (Milestone 1.2  Final version with simulated motion and sleep logic)
     Serial.println("[Sleep] Going to deep sleep now. See you later 💤");
     delay(100); 
     esp_deep_sleep_start();
@@ -31,10 +47,23 @@ void setup() {
         default:
             Serial.println("Other wake-up source");
     }
+<<<<<<< HEAD
 }
 
 void loop() {
     Serial.println("[Loop] Running... will sleep in 5 seconds");
     delay(5000); 
+=======
+
+    sensor.begin();
+    sensor.configWakeOnMotion();
+    sensor.setWakeupMotionEventCallBack(onMotionDetected);
+}
+
+void loop() {
+    sensor.simulateMotion();
+
+    delay(5000);
+>>>>>>> f1b6f46 (Milestone 1.2  Final version with simulated motion and sleep logic)
     goToSleep();
 }
