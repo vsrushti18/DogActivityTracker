@@ -1,46 +1,41 @@
-🐶 Dog Activity Tracker (ESP32-CAM)
+Library Modules – Dog Activity Tracker
+This folder contains modular components for each milestone of the Dog Activity Tracker firmware. Each module encapsulates specific functionality required to simulate, classify, and log dog activities on the ESP32-CAM.
 
-This project is a modular firmware designed to detect and log different types of dog activity using simulated motion data on an ESP32-CAM. The idea was to mimic a real-world pet activity tracker — but using fake sensor values to test the logic.
+⚪Milestone 1.1 – Simulated Accelerometer
+Simulates the QMI8658 sensor behavior using random motion data. Includes a callback mechanism to trigger actions when motion is "detected."
 
-📦 Project Overview
+Files:
+SimulatedQMI8658/SimulatedQMI8658.h
+SimulatedQMI8658/SimulatedQMI8658.cpp
+MotionManager/MotionManager.h
+MotionManager/MotionManager.cpp
 
-Each module focuses on a specific milestone:
+⚪Milestone 1.2 – Sleep Management
+Implements deep sleep on the ESP32 and tracks how many times the board has woken up using RTC memory. Also includes a periodic 2-minute wake timer to simulate wake-on-time behavior.
 
-| Milestone |                            Description                                       |
-|-----------|------------------------------------------------------------------------------|
-|    1.1    | Simulated QMI8658 accelerometer with fake motion data                        |
-|    1.2    | Implemented deep sleep, RTC memory, and optional 2-min timer wake            |
-|    1.3    | RTC-based time management and NTP sync                                       |
-|    1.4    | Classifies activity into Resting, Walking, Running, Playing using thresholds |
-|    1.5    | Logs data every 10 minutes to LittleFS with timestamped binary-like format   |
+Files:
+SleepManager/SleepManager.h
+SleepManager/SleepManager.cpp
+WakeupTimer/WakeupTimer.h
+WakeupTimer/WakeupTimer.cpp
 
+⚪Milestone 1.3 – Time Synchronization
+Handles real-time clock (RTC) operations and synchronizes system time with NTP servers when Wi-Fi is available. Displays current and last sync time.
 
-⚠️ Challenges Faced
+Files:
+TimeManager/TimeManager.h
+TimeManager/TimeManager.cpp
 
-- I didn't have a proper USB-to-Serial programmer for the ESP32-CAM
-- Tried using a Raspberry Pi Pico as a serial flasher... many, many times.
-- The board powered up, but never got past the “connecting…” upload stage — probably due to boot mode or reset issues.
-- So unfortunately, I wasn’t able to run the code on real hardware.
+⚪Milestone 1.4 – Activity Classification
+Takes simulated IMU data and classifies the current activity into one of four states: Resting, Walking, Running, or Playing based on magnitude thresholds.
 
-✅ What Was Done
+Files:
+ActivityClassifier/ActivityClassifier.h
+ActivityClassifier/ActivityClassifier.cpp
 
-- I got the full logic and structure of the firmware working — including motion detection, activity classification, sleep modes, and data logging.
-- Used serial print statements to simulate output and validate that the right functions were being triggered.
-- There's also a #define TEST_MODE you can enable in the code — it simulates motion automatically so you can see the output even without real sensor input.
+⚪Milestone 1.5 – Data Logging
+Tracks the time spent in each activity state and logs this data every 10 minutes into a LittleFS file with a timestamp. Generates daily logs in binary format.
 
-💻 How to Simulate (if ESP32 is available)
-
-1. Connect your ESP32-CAM with a USB-to-Serial adapter.
-2. Clone this repo and open it with VSCode + PlatformIO.
-3. Build the project.
-4. Upload to ESP32 and open the serial monitor.
-5. Observe simulated activity detection and logging every 10 seconds.
-
-📂 Sample Output?
-
-Unfortunately, due to flashing failure, no live serial logs could be captured. However, the firmware is designed to print clean classification and logging messages once it's running on actual hardware.
-But the firmware is designed to print clear logs like:
-  [Activity] Running
-  [Logger] Logged 10-minute data chunk to /data/YYYYMMDD.dat
-
-
+Files:
+ActivityLogger/ActivityLogger.h
+ActivityLogger/ActivityLogger.cpp
