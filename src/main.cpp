@@ -6,8 +6,7 @@
 #include "TimeManager.h"
 #include "WakeupTimer.h"
 
-// 👇 Uncomment this to enable simulation mode without hardware
-#define TEST_MODE
+#define TEST_MODE  // Comment this out to disable simulated motion loop
 
 RTC_DATA_ATTR int wakeCounter = 0;
 
@@ -21,52 +20,56 @@ WakeupTimer timerMgr;
 IMUdata acc[1];
 IMUdata gyr[1];
 
+// Use Serial2 for debugging
+#define DEBUG_SERIAL Serial2
+#define DEBUG_BAUD 115200
+
 void onMotionDetected() {
-    Serial.println(">> Motion callback triggered!");
+    DEBUG_SERIAL.println(">> Motion callback triggered!");
 
     sensor.readFromFifo(acc, 1, gyr, 1);
 
     ActivityType activity = classifier.classify(acc[0], gyr[0]);
     logger.addActivity(activity);
 
-    Serial.print("Accel: ");
-    Serial.print(acc[0].x); Serial.print(", ");
-    Serial.print(acc[0].y); Serial.print(", ");
-    Serial.println(acc[0].z);
+    DEBUG_SERIAL.print("Accel: ");
+    DEBUG_SERIAL.print(acc[0].x); DEBUG_SERIAL.print(", ");
+    DEBUG_SERIAL.print(acc[0].y); DEBUG_SERIAL.print(", ");
+    DEBUG_SERIAL.println(acc[0].z);
 
-    Serial.print("Gyro: ");
-    Serial.print(gyr[0].x); Serial.print(", ");
-    Serial.print(gyr[0].y); Serial.print(", ");
-    Serial.println(gyr[0].z);
+    DEBUG_SERIAL.print("Gyro: ");
+    DEBUG_SERIAL.print(gyr[0].x); DEBUG_SERIAL.print(", ");
+    DEBUG_SERIAL.print(gyr[0].y); DEBUG_SERIAL.print(", ");
+    DEBUG_SERIAL.println(gyr[0].z);
 
-    Serial.print("[Classified] ");
-    Serial.println(classifier.activityToString(activity));
-    Serial.println("--------------------------");
+    DEBUG_SERIAL.print("[Classified] ");
+    DEBUG_SERIAL.println(classifier.activityToString(activity));
+    DEBUG_SERIAL.println("--------------------------");
 }
 
 void goToSleep() {
-    Serial.println("[Sleep] Preparing to sleep for 2 minutes...");
-    esp_sleep_enable_timer_wakeup(2 * 60 * 1000000ULL); // 2 mins
-    Serial.println("[Sleep] Going to deep sleep now. See you later 💤");
+    DEBUG_SERIAL.println("[Sleep] Preparing to sleep for 2 minutes...");
+    esp_sleep_enable_timer_wakeup(2 * 60 * 1000000ULL);
+    DEBUG_SERIAL.println("[Sleep] Going to deep sleep now. See you later 💤");
     delay(100);
     esp_deep_sleep_start();
 }
 
 void setup() {
-    Serial.begin(115200);
+    DEBUG_SERIAL.begin(DEBUG_BAUD, SERIAL_8N1, 5, 4);  // RX = GPIO5, TX = GPIO4
     delay(1000);
 
     wakeCounter++;
-    Serial.println("==== Wake-up Event Detected ====");
-    Serial.print("[Wake] Wake counter: ");
-    Serial.println(wakeCounter);
+    DEBUG_SERIAL.println("==== Wake-up Event Detected ====");
+    DEBUG_SERIAL.print("[Wake] Wake counter: ");
+    DEBUG_SERIAL.println(wakeCounter);
 
     esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
-    Serial.print("[Wake] Wake-up reason: ");
+    DEBUG_SERIAL.print("[Wake] Wake-up reason: ");
     switch (reason) {
-        case ESP_SLEEP_WAKEUP_TIMER: Serial.println("Timer (2-minute timeout)"); break;
-        case ESP_SLEEP_WAKEUP_UNDEFINED: Serial.println("Power-on or reset"); break;
-        default: Serial.println("Other wake-up source"); break;
+        case ESP_SLEEP_WAKEUP_TIMER: DEBUG_SERIAL.println("Timer (2-minute timeout)"); break;
+        case ESP_SLEEP_WAKEUP_UNDEFINED: DEBUG_SERIAL.println("Power-on or reset"); break;
+        default: DEBUG_SERIAL.println("Other wake-up source"); break;
     }
 
     sensor.begin();
@@ -82,29 +85,19 @@ void setup() {
 
     timerMgr.enablePeriodicWake(2 * 60 * 1000000ULL);
 
-    Serial.print("[RTC] Current Time: ");
-    Serial.println(timeMgr.getCurrentTimeString());
-
-#ifdef TEST_MODE
-    Serial.println("[TEST_MODE] Enabled. Motion will be simulated every cycle.");
-#endif
+    DEBUG_SERIAL.print("[RTC] Current Time: ");
+    DEBUG_SERIAL.println(timeMgr.getCurrentTimeString());
 }
 
 void loop() {
 #ifdef TEST_MODE
-    // Simulate a motion event every time in test mode
-    Serial.println("[TEST_MODE] Simulating motion now...");
-    onMotionDetected();
-#else
-    // Normal behavior
     sensor.simulateMotion();
     motion.simulate();
 #endif
 
     logger.logToFile();
 
-    Serial.println("[Loop] Cycle complete.\n");
-    delay(2000); // Wait before next cycle
+    delay(2000);
 
-    // goToSleep(); // ← Only for actual deep sleep test
+    // goToSleep(); // ← enable if using actual deep sleep
 }
